@@ -8,7 +8,7 @@ This project is a web-based interactive art application that uses real-time hand
 - **Hand Tracking**: Real-time hand detection using MediaPipe. Different effects are applied based on hand gestures:
   - **One Open Hand**: Particles move faster.
   - **One Closed Hand**: Particles move slower.
-  - **Two Open Hands**: Activate visual effects.
+  - **Two Open Hands**: Activate visual and audio effects.
 - **Webcam Feed**: Display a live feed from the webcam with the detected hand landmarks.
 
 ## Installation
