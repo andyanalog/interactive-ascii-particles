@@ -40,13 +40,13 @@ This project is a web-based interactive art application that uses real-time hand
 - **app.py**: The Flask application that handles video feed, hand detection, and serves the HTML.
 - **index.html**: The front-end HTML and JavaScript for rendering the interactive particles and webcam feed.
 
-##Dependencies
+## Dependencies
 
--**Flask**
--**Flask-SocketIO**
--**OpenCV**
--**MediaPipe**
--**NumPy**
+-Flask
+-Flask-SocketIO
+-OpenCV
+-MediaPipe
+-NumPy
 
-##License
+## License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
