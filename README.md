@@ -42,11 +42,11 @@ This project is a web-based interactive art application that uses real-time hand
 
 ## Dependencies
 
--Flask
--Flask-SocketIO
--OpenCV
--MediaPipe
--NumPy
+- Flask
+- Flask-SocketIO
+- OpenCV
+- MediaPipe
+- NumPy
 
 ## License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
