@@ -16,7 +16,7 @@ This project is a web-based interactive art application that uses real-time hand
 1. **Clone the repository**:
 
    ```bash
-   git clone <interactive-ascii-particles>
+   git clone <https://github.com/andyanalog/interactive-ascii-particles.git>
    cd <interactive-ascii-particles>
 
 2. **Install the required packages:**:
