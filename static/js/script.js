@@ -11,6 +11,10 @@ let handPositions = { x: canvas.width / 2, y: canvas.height / 2 };
 let handStatus = "none";
 let effectActive = false;
 
+// Audio element
+const audio = new Audio('/static/audio/audio.wav');
+audio.loop = true;  // Loop the audio
+
 socket.on('hand_positions', (data) => {
     handPositions.x = data.x * canvas.width;
     handPositions.y = data.y * canvas.height;
@@ -18,8 +22,14 @@ socket.on('hand_positions', (data) => {
 
     if (handStatus === 'two_open') {
         effectActive = true;
+        if (audio.paused) {
+            audio.play();  // Start playing the audio if it's paused
+        }
     } else {
         effectActive = false;
+        if (!audio.paused) {
+            audio.pause();  // Stop the audio if it's playing
+        }
     }
 });
 
