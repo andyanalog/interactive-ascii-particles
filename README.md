@@ -2,6 +2,8 @@
 
 This project is a web-based interactive art application that uses real-time hand detection and ASCII particles to create dynamic visual effects. It is built using Flask, SocketIO, and MediaPipe for hand tracking, combined with HTML5 Canvas for rendering the visual effects.
 
+https://github.com/user-attachments/assets/d2f79592-6404-473e-932f-9d6d205a06ce
+
 ## Features
 
 - **Interactive ASCII Particles**: Particles represented by random ASCII characters move and change based on hand gestures detected by MediaPipe.
