@@ -2,18 +2,59 @@ body, html {
     margin: 0;
     padding: 0;
     overflow: hidden;
-    background-color: black;
+    background-color: #111;
+    font-family: Arial, sans-serif;
 }
-canvas {
-    display: block;
+
+#mainImage {
     position: absolute;
-    top: 0;
-    left: 0;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 1920px;
+    height: 1080px;
+    object-fit: contain;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    border-radius: 8px;
 }
+
 #videoFeed {
     position: absolute;
-    top: 10px;
-    right: 10px;
+    top: 20px;
+    right: 20px;
     width: 200px;
-    border: 2px solid white;
+    border: 3px solid #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* #imageCounter {
+    position: absolute;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: white;
+    font-size: 24px;
+    background-color: rgba(0, 0, 0, 0.7);
+    padding: 10px 20px;
+    border-radius: 20px;
+} */
+
+#instructions {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    color: white;
+    background-color: rgba(0, 0, 0, 0.7);
+    padding: 15px;
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+#instructions h3 {
+    margin: 0 0 10px 0;
+}
+
+#instructions p {
+    margin: 5px 0;
 }
