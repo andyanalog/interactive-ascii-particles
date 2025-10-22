@@ -22,10 +22,12 @@ body, html {
     position: absolute;
     top: 20px;
     right: 20px;
-    width: 200px;
+    width: 320px;
+    height: 240px;
     border: 3px solid #fff;
     border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    object-fit: cover;
 }
 
 /* #imageCounter {
@@ -40,7 +42,7 @@ body, html {
     border-radius: 20px;
 } */
 
-#instructions {
+/* #instructions {
     position: absolute;
     top: 20px;
     left: 20px;
@@ -49,12 +51,15 @@ body, html {
     padding: 15px;
     border-radius: 8px;
     font-size: 14px;
-}
+    max-width: 300px;
+} */
 
-#instructions h3 {
+/* #instructions h3 {
     margin: 0 0 10px 0;
-}
+    font-size: 18px;
+} */
 
-#instructions p {
+/* #instructions p {
     margin: 5px 0;
-}
+    line-height: 1.5;
+} */
