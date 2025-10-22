@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Camera Feed - Body Detection</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #000;
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        #videoFeed {
+            max-width: 100vw;
+            max-height: 100vh;
+            width: auto;
+            height: auto;
+            border: 5px solid #333;
+            box-shadow: 0 0 30px rgba(0, 255, 0, 0.3);
+        }
+
+        #status {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 25px;
+            font-size: 20px;
+            font-weight: bold;
+            text-align: center;
+            z-index: 10;
+            border: 3px solid #444;
+        }
+
+        #status.inside {
+            background-color: rgba(0, 200, 0, 0.9);
+            border-color: #0f0;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+        }
+
+        #status.outside {
+            background-color: rgba(200, 0, 0, 0.9);
+            border-color: #f00;
+            box-shadow: 0 0 20px rgba(255, 0, 0, 0.5);
+        }
+
+        #instructions {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: white;
+            background-color: rgba(0, 0, 0, 0.8);
+            padding: 15px 20px;
+            border-radius: 10px;
+            font-size: 14px;
+            text-align: center;
+            max-width: 400px;
+        }
+
+        #instructions h3 {
+            margin: 0 0 10px 0;
+            font-size: 16px;
+        }
+
+        #instructions p {
+            margin: 5px 0;
+            line-height: 1.4;
+        }
+    </style>
+</head>
+<body>
+    <div id="status" class="outside">🔴 OUTSIDE ZONE</div>
+    <img id="videoFeed" src="/video_feed" alt="Camera Feed">
+    
+    <div id="instructions">
+        <h3>Detection Monitor</h3>
+        <p>Step inside the <strong>green rectangle</strong> to start playback</p>
+        <p>View the main display on the other screen</p>
+    </div>
+    
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+    <script>
+        const socket = io();
+        const statusElement = document.getElementById('status');
+
+        socket.on('connect', () => {
+            console.log('Viewer connected to server');
+        });
+
+        socket.on('disconnect', () => {
+            console.log('Viewer disconnected from server');
+        });
+
+        socket.on('presence_status', (data) => {
+            console.log('Presence status:', data.status);
+            
+            if (data.status === 'inside') {
+                statusElement.textContent = '🟢 INSIDE ZONE - Playing';
+                statusElement.className = 'inside';
+            } else {
+                statusElement.textContent = '🔴 OUTSIDE ZONE - Stopped';
+                statusElement.className = 'outside';
+            }
+        });
+    </script>
+</body>
+</html>

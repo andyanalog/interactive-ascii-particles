@@ -28,6 +28,10 @@ DETECTION_RECT = (0.2, 0.15, 0.8, 0.85)  # Centered rectangle covering 60% width
 def index():
     return render_template('index.html')
 
+@app.route('/viewer')
+def viewer():
+    return render_template('viewer.html')
+
 def is_person_in_rectangle(pose_landmarks, rect):
     """
     Check if the person's center of mass is inside the detection rectangle
