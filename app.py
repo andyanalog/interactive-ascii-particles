@@ -7,7 +7,7 @@ import threading
 import time
 
 app = Flask(__name__)
-socketio = SocketIO(app, cors_allowed_origins="*")
+socketio = SocketIO(app, cors_allowed_origins="*", ping_timeout=60, ping_interval=25)
 
 # Initialize MediaPipe Pose
 mp_pose = mp.solutions.pose
@@ -20,9 +20,14 @@ latest_frame = None
 frame_lock = threading.Lock()
 camera_active = True
 
+# Detection smoothing - prevent flickering
+detection_history = []
+DETECTION_HISTORY_SIZE = 8  # Number of frames to track
+REQUIRED_CONFIDENCE = 0.65  # 65% of frames must agree to change status
+
 # Define the detection rectangle (as percentage of frame dimensions)
 # Format: (x_min, y_min, x_max, y_max) where values are 0.0 to 1.0
-DETECTION_RECT = (0.2, 0.15, 0.8, 0.85)  # Centered rectangle covering 60% width and 70% height
+DETECTION_RECT = (0.4, 0.15, 0.6, 0.85)  # Centered rectangle covering 60% width and 70% height
 
 @app.route('/')
 def index():
@@ -68,38 +73,106 @@ def is_person_in_rectangle(pose_landmarks, rect):
     x_min, y_min, x_max, y_max = rect
     return x_min <= center_x <= x_max and y_min <= center_y <= y_max
 
+def get_smoothed_presence(current_detection):
+    """
+    Smooth detection over multiple frames to prevent flickering
+    Only change status if we have consistent readings
+    """
+    global detection_history, current_presence_status
+    
+    # Add current detection to history
+    detection_history.append(current_detection)
+    
+    # Keep only recent history
+    if len(detection_history) > DETECTION_HISTORY_SIZE:
+        detection_history.pop(0)
+    
+    # Need minimum history before making decisions
+    if len(detection_history) < DETECTION_HISTORY_SIZE:
+        return current_presence_status
+    
+    # Count "inside" detections
+    inside_count = sum(1 for d in detection_history if d == "inside")
+    inside_ratio = inside_count / len(detection_history)
+    
+    # Only change status if we have strong confidence
+    if inside_ratio >= REQUIRED_CONFIDENCE:
+        return "inside"
+    elif inside_ratio <= (1 - REQUIRED_CONFIDENCE):
+        return "outside"
+    else:
+        # Not confident either way, keep current status
+        return current_presence_status    
+
 def camera_loop():
-    """Single camera capture loop that handles both detection and video feed"""
+    """Single camera capture loop with external webcam support"""
     global current_presence_status, latest_frame, camera_active
     
-    cap = cv2.VideoCapture(0)
+    cap = cv2.VideoCapture(1)  # External webcam
+    
+    # Configure camera for stability
+    cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+    cap.set(cv2.CAP_PROP_FPS, 30)
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+    
+    # Warm up camera
+    print("Warming up camera...")
+    for i in range(10):
+        cap.read()
+        time.sleep(0.1)
+    print("Camera ready!")
+    
+    frame_count = 0
+    last_successful_frame = None
+    consecutive_failures = 0
     
     while camera_active:
         success, frame = cap.read()
+        
         if not success:
-            time.sleep(0.1)
-            continue
+            consecutive_failures += 1
+            print(f"Frame read failed. Consecutive failures: {consecutive_failures}")
+            
+            if consecutive_failures > 30:
+                print("Reconnecting camera...")
+                cap.release()
+                time.sleep(1)
+                cap = cv2.VideoCapture(1)
+                cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+                cap.set(cv2.CAP_PROP_FPS, 30)
+                cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+                cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+                consecutive_failures = 0
+                continue
+            
+            if last_successful_frame is not None:
+                frame = last_successful_frame.copy()
+            else:
+                time.sleep(0.1)
+                continue
+        else:
+            last_successful_frame = frame.copy()
+            consecutive_failures = 0
         
-        # Flip frame horizontally for mirror effect
+        frame_count += 1
         frame = cv2.flip(frame, 1)
-        
         h, w, _ = frame.shape
         
-        # Draw the detection rectangle on the frame
-        rect_color = (0, 255, 0)  # Green
+        # Draw rectangle
+        rect_color = (0, 255, 0)
         x_min, y_min, x_max, y_max = DETECTION_RECT
         top_left = (int(x_min * w), int(y_min * h))
         bottom_right = (int(x_max * w), int(y_max * h))
         cv2.rectangle(frame, top_left, bottom_right, rect_color, 3)
         
-        # Process frame for pose detection
+        # Process every frame for consistent detection
+        raw_presence = "outside"
         image_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         results = pose.process(image_rgb)
 
-        presence_status = "outside"
-
         if results.pose_landmarks:
-            # Draw pose landmarks on the frame
+            # Draw pose landmarks
             mp_drawing.draw_landmarks(
                 frame, 
                 results.pose_landmarks, 
@@ -108,28 +181,28 @@ def camera_loop():
                 mp_drawing.DrawingSpec(color=(245,66,230), thickness=2, circle_radius=2)
             )
             
-            # Check if person is inside the rectangle
+            # Check if person is inside
             if is_person_in_rectangle(results.pose_landmarks, DETECTION_RECT):
-                presence_status = "inside"
-                # Change rectangle color to indicate detection
-                cv2.rectangle(frame, top_left, bottom_right, (0, 255, 255), 3)  # Yellow when person inside
+                raw_presence = "inside"
+                cv2.rectangle(frame, top_left, bottom_right, (0, 255, 255), 3)
+        
+        # Apply smoothing to prevent flickering
+        presence_status = get_smoothed_presence(raw_presence)
 
-        # Only emit if status changed
+        # Only emit if status actually changed
         if presence_status != current_presence_status:
             current_presence_status = presence_status
             socketio.emit('presence_status', {'status': presence_status})
-            print(f"Presence status: {presence_status}")
+            print(f"Presence status changed to: {presence_status}")
         
-        # Store the latest frame for video feed
         with frame_lock:
             latest_frame = frame.copy()
         
-        time.sleep(0.033)  # ~30 fps
+        time.sleep(0.033)
     
     cap.release()
 
 def gen_frames():
-    """Generator that yields frames from the shared camera feed"""
     global latest_frame
     
     while True:
@@ -139,8 +212,8 @@ def gen_frames():
                 continue
             frame = latest_frame.copy()
         
-        # Encode frame as JPEG
-        ret, buffer = cv2.imencode('.jpg', frame)
+        # Compress JPEG for faster streaming
+        ret, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 85])
         frame_bytes = buffer.tobytes()
 
         yield (b'--frame\r\n'
